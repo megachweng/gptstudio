@@ -55,6 +55,24 @@ mod_app_server <- function(id, ide_colors = get_ide_theme_info()) {
       settings = sidebar$settings,
       history = sidebar$history
     )
+
+    # Add global observer for insert code button (handles clicks from anywhere)
+    observeEvent(input$insert_code_to_rstudio, {
+      message("Insert code button clicked, code to insert: ", substr(input$insert_code_to_rstudio$code, 1, 30), "...")
+      if (rstudioapi::isAvailable()) {
+        message("RStudio API is available")
+        tryCatch({
+          rstudioapi::insertText(input$insert_code_to_rstudio$code)
+          showNotification("Code inserted into editor", type = "message")
+          message("Code inserted successfully")
+        }, error = function(e) {
+          showNotification(paste("Error inserting code:", e$message), type = "error")
+        })
+      } else {
+        showNotification("RStudio API not available", type = "warning")
+      }
+    })
+
   })
 }
 
