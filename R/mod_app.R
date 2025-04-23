@@ -5,13 +5,14 @@
 #'
 #' @import htmltools
 #' @import shiny
-#'
+#' @export
 mod_app_ui <- function(id,
                        ide_colors = get_ide_theme_info(),
                        code_theme_url = get_highlightjs_theme()) {
   ns <- NS(id)
   translator <- create_translator(language = getOption("gptstudio.language"))
   tagList(
+    tags$script(HTML(sprintf("window.gptstudio_insert_code_id = '%s';", ns("insert_code_to_rstudio")))),
     useBusyIndicators(),
     bslib::page_fluid(
       theme = create_chat_app_theme(ide_colors),
@@ -44,7 +45,7 @@ mod_app_ui <- function(id,
 #'
 #' @inheritParams mod_app_ui
 #' @inheritParams gptstudio_run_chat_app
-#'
+#' @export
 mod_app_server <- function(id, ide_colors = get_ide_theme_info()) {
   moduleServer(id, function(input, output, session) {
     sidebar <- mod_sidebar_server("sidebar")
@@ -55,23 +56,21 @@ mod_app_server <- function(id, ide_colors = get_ide_theme_info()) {
       settings = sidebar$settings,
       history = sidebar$history
     )
-
-    # Add global observer for insert code button (handles clicks from anywhere)
+    
     observeEvent(input$insert_code_to_rstudio, {
-      message("Insert code button clicked, code to insert: ", substr(input$insert_code_to_rstudio$code, 1, 30), "...")
-      if (rstudioapi::isAvailable()) {
-        message("RStudio API is available")
-        tryCatch({
-          rstudioapi::insertText(input$insert_code_to_rstudio$code)
-          showNotification("Code inserted into editor", type = "message")
-          message("Code inserted successfully")
-        }, error = function(e) {
-          showNotification(paste("Error inserting code:", e$message), type = "error")
-        })
-      } else {
-        showNotification("RStudio API not available", type = "warning")
+      if (!rstudioapi::isAvailable()) {
+        showNotification("只能在 RStudio 桌面版中插入代码", type = "error")
+        return()
       }
-    })
+      # 获取当前 source editor 的 context
+      context <- rstudioapi::getSourceEditorContext()
+      # 插入到当前 source editor
+      rstudioapi::insertText(
+        location = context$selection[[1]]$range,
+        text = input$insert_code_to_rstudio$code,
+        id = context$id
+      )
+    }, ignoreInit = TRUE)
 
   })
 }

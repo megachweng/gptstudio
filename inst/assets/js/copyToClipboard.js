@@ -39,11 +39,14 @@ $(document).on('click', '.btn-insert-code', function(event) {
 
   // Use Shiny to send the code to R
   if (typeof Shiny !== 'undefined') {
-    Shiny.setInputValue('insert_code_to_rstudio', {
+    // 获取 inputId
+    var inputId = window.gptstudio_insert_code_id || "insert_code_to_rstudio";
+    Shiny.setInputValue(inputId, {
       code: code,
       time: new Date().getTime() // To ensure the value is always "changed"
-    });
-    
+    }, {priority: "event"});
+
+
     // update insert button text
     const insertButton = $(this);
     const originalContent = insertButton.html();

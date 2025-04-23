@@ -105,6 +105,7 @@ open_app_in_viewer <- function(host, port) {
 }
 
 wait_for_bg_app <- function(url, max_seconds = 10) {
+  Sys.sleep(5)
   request(url) |>
     req_retry(
       max_seconds = max_seconds,
