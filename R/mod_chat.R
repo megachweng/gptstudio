@@ -174,6 +174,15 @@ mod_chat_server <- function(
       updateTextAreaInput(session, "chat_input", value = "")
     })
 
+    observeEvent(input$insert_code_to_rstudio, {
+      tryCatch({
+        rstudioapi::insertText(input$insert_code_to_rstudio$code)
+        showNotification("Code inserted into editor", type = "message")
+      }, error = function(e) {
+        showNotification(paste("Error inserting code:", e$message), type = "error")
+      })
+    })
+
     output$chat_with_audio <- renderUI({
       ns <- session$ns
       audio_recorder <- if (rv$audio_input) {
