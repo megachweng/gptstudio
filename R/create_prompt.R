@@ -170,6 +170,10 @@ insert_text <- function(improved_text) {
   rstudioapi::insertText(improved_text)
 }
 
+ghost_text <- function(improved_text) {
+  rstudioapi::verifyAvailable()
+  rstudioapi::setGhostText(improved_text)
+}
 `%|!|%` <- function(x, y) {
   if (is_null(x)) x else y
 }

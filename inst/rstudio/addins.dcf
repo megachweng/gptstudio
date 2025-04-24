@@ -1,24 +1,24 @@
-Name: Spelling and Grammar
-Description: Uses AI to improve spelling and grammar of selected text
-Binding: gptstudio_spelling_grammar
-Interactive: false
-
-Name: Comment your code
-Description: Uses AI to generate comments for your code
-Binding: gptstudio_comment_code
-Interactive: false
-
-Name: Chat
+Name: 💬 Chat
 Description: Start a chat session
 Binding: gptstudio_chat
 Interactive: true
 
-Name: Chat in Source
-Description: Use ChatGPT in source instead of in a shiny app
-Binding: gptstudio_chat_in_source_addin
-Interactive: false
-
-Name: GPTStudio Chat Gadget
+Name: 🤖 Chat Gadget
 Description: Chat with GPT and insert code into RStudio
 Binding: gptstudio_chat_gadget
 Interactive: true
+
+Name: 📝 Inline Chat
+Description: Chat about Selected code
+Binding: gptstudio_chat_in_source_addin
+Interactive: false
+
+Name: ✍️ Spelling and Grammar 
+Description: Uses AI to improve spelling and grammar of selected text
+Binding: gptstudio_spelling_grammar
+Interactive: false
+
+Name: 💡 Comment your code 
+Description: Uses AI to generate comments for your code
+Binding: gptstudio_comment_code
+Interactive: false

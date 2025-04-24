@@ -42,7 +42,9 @@ Imports:
     SSEparser,
     stringr (>= 1.5.0),
     utils,
-    yaml
+    yaml,
+    callr,
+    miniUI
 Suggests: 
     AzureGraph,
     future,

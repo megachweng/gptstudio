@@ -104,13 +104,21 @@ open_app_in_viewer <- function(host, port) {
   rstudioapi::viewer(translated_url)
 }
 
-wait_for_bg_app <- function(url, max_seconds = 10) {
-  Sys.sleep(5)
-  request(url) |>
-    req_retry(
-      max_seconds = max_seconds,
-      is_transient = \(resp) resp_status(resp) >= 300,
-      backoff = function(n) 0.2
-    ) |>
-    req_perform()
+wait_for_bg_app <- function(url, max_seconds = 20) {
+  start_time <- Sys.time()
+  repeat {
+    resp <- tryCatch(
+      request(url) |> req_perform(),
+      error = function(e) e
+    )
+    # 如果返回对象不是error，或者是403错误，则认为服务已启动
+    if (!inherits(resp, "error") || (inherits(resp, "error") && grepl("403", conditionMessage(resp)))) {
+      break
+    }
+    if (as.numeric(Sys.time() - start_time, units = "secs") > max_seconds) {
+      cli::cli_alert_danger("Timeout: Service did not start within {max_seconds} seconds.")
+      break
+    }
+    Sys.sleep(0.2)
+  }
 }

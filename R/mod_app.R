@@ -59,7 +59,7 @@ mod_app_server <- function(id, ide_colors = get_ide_theme_info()) {
     
     observeEvent(input$insert_code_to_rstudio, {
       if (!rstudioapi::isAvailable()) {
-        showNotification("只能在 RStudio 桌面版中插入代码", type = "error")
+        showNotification("只有从ChatGadget运行才可以插入文本", type = "error")
         return()
       }
       # 获取当前 source editor 的 context
