@@ -143,7 +143,7 @@ gptstudio_chat_in_source_dialog <- function() {
       service <- getOption("gptstudio.service")
       model <- getOption("gptstudio.model")
       selection <- get_selection()
-      instructions <- create_generic_task(selection, input$prompt)
+      instructions <- create_generic_task2(selection, input$prompt)
   
       cli::cli_progress_step(msg = "Sending query to {service}...", spinner = TRUE)
       cli::cli_progress_update()
@@ -214,7 +214,57 @@ gptstudio_chat_in_source_dialog <- function() {
   )
 }
 
-create_generic_task <- function(selection, instructions) {
+gptstudio_chat_in_source <- function(task = NULL, keep_selection = TRUE) {
+  selection <- get_selection()
+  service <- getOption("gptstudio.service")
+  model <- getOption("gptstudio.model")
+  task <- task %||% create_generic_task()
+
+  instructions <- glue::glue("{task}: {selection}")
+
+  cli::cli_progress_step(
+    msg = "Sending query to {service}...",
+    msg_done = "{service} responded",
+    spinner = TRUE
+  )
+
+  cli::cli_progress_update()
+
+  response <-
+    gptstudio_create_skeleton(
+      service = service,
+      prompt  = instructions,
+      history = list(),
+      stream  = FALSE,
+      model   = model
+    ) |>
+    gptstudio_request_perform()
+
+  text_to_insert <- as.character(response$response)
+
+  if (keep_selection) {
+    text_to_insert <- c(selection, text_to_insert)
+  }
+
+  cli_process_done()
+
+  insert_text(text_to_insert)
+}
+
+create_generic_task <- function() {
+  file_ext <- get_file_extension()
+
+  glue::glue(
+    "You are an expert on following instructions without making conversation.",
+    "Do the task specified after the colon.",
+    "Your response will go directly into an open .{file_ext} file in an IDE",
+    "without any post processing.",
+    "Output only plain text. Do not output markdown.",
+    .sep = " "
+  )
+}
+
+create_generic_task2 <- function(selection, instructions) {
   file_ext <- get_file_extension()
   glue::glue(
     "You are an expert on following instructions without making conversation.\n",
