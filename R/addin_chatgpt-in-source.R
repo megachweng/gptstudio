@@ -27,13 +27,14 @@ gptstudio_chat_in_source_dialog <- function() {
     tags$head(
       tags$style(HTML("
         .mini-content { height: calc(100vh - 80px) !important; display: flex; flex-direction: column;}
-        .main-area { flex: 1 1 auto; }
+        .main-area { flex: 1 1 auto; margin-bottom: 15px; } /* Added margin here */
         .footer-bar {
           display: flex;
           align-items: center;
           padding: 0 12px 12px 12px;
           background: #fff;
           gap: 12px;
+          margin-top: 10px; /* Added margin here */
         }
         .footer-bar .form-group {
           margin-bottom: 0;
@@ -71,10 +72,51 @@ gptstudio_chat_in_source_dialog <- function() {
           white-space: pre;
         }
         #selection_text {
-          height: 100px;
+          height: 150px; /* 初始状态较高 */
           margin-bottom: 10px;
+          transition: height 0.3s ease;
+        }
+        /* 结果区域初始隐藏 */
+        .result-area {
+          display: none;
+        }
+        /* Improved code-wrapper styling */
+        .code-wrapper {
+          position: relative;
+          width: 100%;
+          min-height: 100px; /* Minimum height */
+          overflow: auto;
+          border: 1px solid #6c757d;
+          border-radius: 6px;
+          padding: 10px;
+          font-size: 16px;
+          background-color: #f6f8fa;
+          margin-bottom: 15px;
+          display: block; /* Ensure proper block display */
+        }
+        /* Result area specific */
+        .main-area .code-wrapper {
+          min-height: 250px;
+        }
+        .code-wrapper pre {
+          margin: 0;
+          border: none;
+          background: transparent;
+          height: 100%;
+          padding: 0;
+          overflow: auto;
+        }
+        .hljs {
+          background: transparent !important;
+          padding: 0 !important;
+          height: 100%;
+          white-space: pre;
+          font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
         }
       ")),
+      tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs.min.css"),
+      tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"),
+      tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/r.min.js"),
       tags$script(HTML('
         // 让窗口打开时聚焦输入框
         $(document).on("shiny:connected", function() {
@@ -89,47 +131,124 @@ gptstudio_chat_in_source_dialog <- function() {
             $("#send").click();
           }
         });
-        // 响应R发来的新内容，填入textarea
+        
+        // 显示结果区域并调整选中文本框高度的函数
+        function showResultArea() {
+          document.querySelector(".result-area").style.display = "block";
+          document.getElementById("selection_text").style.height = "80px"; // 缩小选中文本区域
+          
+          // 应用过渡动画效果
+          setTimeout(function() {
+            const selectionWrapper = document.querySelector("#selection_text").parentElement.querySelector(".code-wrapper");
+            if (selectionWrapper) {
+              selectionWrapper.style.minHeight = "80px";
+              selectionWrapper.style.height = "80px";
+            }
+          }, 0);
+        }
+        
+        // 代码高亮处理函数
+        function applyHighlighting(elementId, text, language) {
+          // 获取对应元素
+          const element = document.getElementById(elementId);
+          if (!element) return;
+          
+          // 获取元素高度以保留
+          const originalHeight = element.offsetHeight;
+          
+          // 先移除旧的高亮容器
+          const parent = element.parentElement;
+          const existingWrapper = parent.querySelector(".code-wrapper");
+          if (existingWrapper) {
+            existingWrapper.remove();
+          }
+          
+          // 隐藏原始textarea但保留其功能
+          element.style.position = "absolute";
+          element.style.left = "-9999px";
+          element.style.height = "1px"; // Keep minimal height instead of 100%
+          element.style.opacity = "0";
+          element.value = text;
+          
+          // 创建高亮显示容器
+          const wrapper = document.createElement("div");
+          wrapper.className = "code-wrapper";
+          if (elementId === "result_text") {
+            wrapper.style.minHeight = Math.max(250, originalHeight) + "px";
+          } else {
+            wrapper.style.minHeight = Math.max(100, originalHeight) + "px";
+          }
+          
+          const pre = document.createElement("pre");
+          const code = document.createElement("code");
+          if (language) {
+            code.className = "language-" + language;
+          }
+          code.textContent = text;
+          pre.appendChild(code);
+          wrapper.appendChild(pre);
+          parent.appendChild(wrapper);
+          
+          // 应用高亮
+          hljs.highlightElement(code);
+        }
+        
+        // 响应R发来的新内容，填入textarea并应用高亮
         Shiny.addCustomMessageHandler("updateResultText", function(msg){
           document.getElementById("result_text").value = msg.value;
+          applyHighlighting("result_text", msg.value, Shiny.getFileExtension || "r");
+          // 只有当有内容时才显示结果区域
+          if (msg.value && msg.value.trim().length > 0) {
+            showResultArea();
+          }
         });
-        // 响应R发来的选中文本，填入selection_text
+        
+        // 响应R发来的选中文本，填入selection_text并应用高亮
         Shiny.addCustomMessageHandler("updateSelectionText", function(msg){
           document.getElementById("selection_text").value = msg.value;
+          applyHighlighting("selection_text", msg.value, Shiny.getFileExtension || "r");
+        });
+        
+        // 存储文件扩展名以供高亮使用
+        Shiny.addCustomMessageHandler("setFileExtension", function(msg){
+          Shiny.getFileExtension = msg.value.toLowerCase();
         });
       '))
     ),
-    gadgetTitleBar("AI助手"),
+    gadgetTitleBar("AI Assistant"),
     miniContentPanel(
       div(
         class = "mini-content",
         div(
           style = "margin-bottom: 10px;",
-          tags$label("选中文本：", `for` = "selection_text", style = "font-weight: bold;"),
+          tags$label("Selected Text:", `for` = "selection_text", style = "font-weight: bold;"),
           tags$textarea(
             id = "selection_text",
-            placeholder = "RStudio中选中的文本会显示在这里",
+            placeholder = "Text selected in RStudio will be shown here",
             readonly = "readonly",
-            style = "width: 100%; height: 100px; resize: vertical; margin-bottom: 10px;"
+            style = "width: 100%; height: 150px; resize: vertical; margin-bottom: 10px;"
           )
         ),
         div(
-          style = "display: flex; justify-content: flex-end; margin: 8px 0;",
-          actionButton("copy", label = tagList(shiny::icon("copy"), "Copy")),
-          actionButton("insert", label = tagList(shiny::icon("plus"), "Insert"), style = "margin-left: 8px;")
-        ),
-        div(
-          class = "main-area",
-          tags$textarea(
-            id = "result_text",
-            placeholder = "AI返回的结果这里显示",
-            readonly = "readonly"
+          class = "result-area", # 添加result-area类用于控制显示/隐藏
+          div(
+            style = "display: flex; justify-content: flex-end; margin: 8px 0;",
+            actionButton("copy", label = tagList(shiny::icon("copy"), "Copy")),
+            actionButton("insert", label = tagList(shiny::icon("plus"), "Insert"), style = "margin-left: 8px;")
+          ),
+          div(
+            class = "main-area",
+            tags$textarea(
+              id = "result_text",
+              placeholder = "AI response will be displayed here",
+              readonly = "readonly"
+            )
           )
         ),
         div(
           class = "footer-bar",
-          div(style = "flex: 1 1 auto;", textInput("prompt", NULL, placeholder = "Prompt", width = "100%")),
-          actionButton("send", "Send")
+          div(style = "flex: 1 1 auto;", textInput("prompt", NULL, placeholder = "Ask AI", width = "100%")),
+          actionButton("send",label = tagList(shiny::icon("paper-plane"), "Send")),
         )
       )
     )
@@ -138,6 +257,12 @@ gptstudio_chat_in_source_dialog <- function() {
   server <- function(input, output, session) {
     rv <- reactiveValues(response = "")
     
+    #  Send file extension to client for syntax highlighting
+    observe({
+      file_ext <- get_file_extension()
+      session$sendCustomMessage("setFileExtension", list(value = file_ext))
+    })
+    
     observeEvent(input$send, {
       req(input$prompt)
       service <- getOption("gptstudio.service")
@@ -145,7 +270,7 @@ gptstudio_chat_in_source_dialog <- function() {
       selection <- get_selection()
       instructions <- create_generic_task2(selection, input$prompt)
   
-      cli::cli_progress_step(msg = "Sending query to {service}...", spinner = TRUE)
+      cli::cli_progress_step(msg = "Sending query to AI...", spinner = TRUE)
       cli::cli_progress_update()
 
       response <-
@@ -160,13 +285,15 @@ gptstudio_chat_in_source_dialog <- function() {
 
       rv$response <- as.character(response$response)
       cli_process_done()
-      # 通过自定义消息把内容塞到 textarea
+      # Send content to textarea through custom message
       session$sendCustomMessage("updateResultText", list(value = rv$response))
     })
 
     # 确保UI打开时 textarea 内容也能绑定
     observe({
-      session$sendCustomMessage("updateResultText", list(value = rv$response))
+      if (!is.null(rv$response) && nchar(rv$response) > 0) {
+        session$sendCustomMessage("updateResultText", list(value = rv$response))
+      }
     })
     observe({
       session$sendCustomMessage("updateSelectionText", list(value = get_selection()))
@@ -174,13 +301,13 @@ gptstudio_chat_in_source_dialog <- function() {
     observeEvent(input$copy, {
       req(rv$response)
       clipr::write_clip(rv$response)
-      showNotification("已复制到剪贴板", type = "message")
+      showNotification("Copied to clipboard", type = "message")
     })
 
     observeEvent(input$insert, {
       req(rv$response)
       insert_text(rv$response)
-      showNotification("已插入到编辑器", type = "message")
+      showNotification("Inserted into editor", type = "message")
     })
 
     observeEvent(input$done, {
@@ -198,7 +325,7 @@ gptstudio_chat_in_source_dialog <- function() {
 
   tryCatch(
     {
-      runGadget(ui, server, viewer = dialogViewer("AI助手"))
+      runGadget(ui, server, viewer = dialogViewer(dialogName = "AI Assistant", width = 800, height = 600))
     },
     error = function(e) {
       if (inherits(e, "shiny.silent.error")) {
@@ -223,7 +350,7 @@ gptstudio_chat_in_source <- function(task = NULL, keep_selection = TRUE) {
   instructions <- glue::glue("{task}: {selection}")
 
   cli::cli_progress_step(
-    msg = "Sending query to {service}...",
+    msg = "Sending query to AI...",
     msg_done = "{service} responded",
     spinner = TRUE
   )
