@@ -13,11 +13,6 @@ Description: Chat about Selected code
 Binding: gptstudio_chat_in_source_addin
 Interactive: false
 
-Name: ✍️ Spelling and Grammar 
-Description: Uses AI to improve spelling and grammar of selected text
-Binding: gptstudio_spelling_grammar
-Interactive: false
-
 Name: 💡 Comment your code 
 Description: Uses AI to generate comments for your code
 Binding: gptstudio_comment_code
