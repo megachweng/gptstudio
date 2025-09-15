@@ -19,14 +19,14 @@ URL: https://github.com/MichelNivard/gptstudio,
     https://michelnivard.github.io/gptstudio/
 BugReports: https://github.com/MichelNivard/gptstudio/issues
 Depends:
-    R (>= 4.1)
+    R (>= 4.1),
+    ellmer (== 0.1.1)
 Imports: 
     bsicons (>= 0.1.2),
     bslib (>= 0.8.0),
     cli,
     colorspace,
     coro,
-    ellmer (== 0.1.1),
     glue,
     htmltools,
     htmlwidgets,
