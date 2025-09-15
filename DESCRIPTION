@@ -20,8 +20,8 @@ URL: https://github.com/MichelNivard/gptstudio,
 BugReports: https://github.com/MichelNivard/gptstudio/issues
 Depends:
     R (>= 4.1),
-    ellmer (== 0.1.1)
 Imports: 
+    ellmer (== 0.1.1)
     bsicons (>= 0.1.2),
     bslib (>= 0.8.0),
     cli,
