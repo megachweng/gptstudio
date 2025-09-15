@@ -26,7 +26,7 @@ Imports:
     cli,
     colorspace,
     coro,
-    ellmer,
+    ellmer (==0.1.1),
     glue,
     htmltools,
     htmlwidgets,
